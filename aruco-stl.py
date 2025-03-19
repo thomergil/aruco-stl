@@ -5,7 +5,7 @@ import argparse
 import os
 
 DEFAULT_SIZE = 100  # mm
-DEFAULT_THICKNESS = 2  # mm
+DEFAULT_THICKNESS = 1  # mm
 
 def generate_marker_image(dictionary, marker_id, total_grid):
     marker_size = dictionary.markerSize
