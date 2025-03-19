@@ -2,7 +2,7 @@
 
 This tool generates STL files for ArUco markers suitable for 3D printing – whether you have a printer with an MMU (multi-material unit) or not.
 
-The script produces two modes:
+The script operates in two modes:
 
 - Stacked Mode (default):
   Generates a full-board base (`base.stl`) and a top layer (`top.stl`) with the marker pattern.
