@@ -5,11 +5,11 @@ This tool generates STL files for ArUco markers suitable for 3D printing – whe
 The script produces two modes:
 
 - Stacked Mode (default):
-  Generates a full-board base (base.stl) and a top layer (top.stl) with the marker pattern.
+  Generates a full-board base (`base.stl`) and a top layer (`top.stl`) with the marker pattern.
   This mode is suitable for printers WITHOUT an MMU (print the base in one color and then swap filament for the top layer).
 
 - Flat Mode (`--flat` flag):
-  Generates two interleaved parts at the same Z level (black.stl and white.stl),
+  Generates two interleaved parts at the same Z level (`black.stl` and `white.stl`),
   useful for printers WITH an MMU.
 
 ![ArUco images in PrusaSlicer](aruco.png "ArUco images in PrusaSlicer")
