@@ -39,7 +39,7 @@ python3 aruco-stl.py --flat 102
 ```
 
 ### Print
-Drag the generated STL files into PrusaSlicer or your slicer of choice. In stacked mode, print the base (one color) first then the top (a different color). In flat mode, both parts lie on the same plane.
+Drag the generated STL files into PrusaSlicer or your slicer of choice. In stacked mode, print the base (in black) first, and then the top (in white). In flat mode, both parts lie on the same plane.
 
 ### Source code
 
