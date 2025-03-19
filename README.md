@@ -17,6 +17,10 @@ The script operates in two modes:
 ### Install
 
 ```bash
+# either run the shortcut
+./install.sh
+
+# ...or run the following commands manually
 python3 -m venv env
 source env/bin/activate
 python3 -m pip install -r requirements.txt
