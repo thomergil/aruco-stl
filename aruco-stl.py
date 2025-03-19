@@ -128,7 +128,7 @@ def main():
     marker_img = generate_marker_image(chosen_dict, marker_id, total_grid)
     cell_size = args.size / total_grid
 
-    out_dir = f"aruco-{marker_id}"
+    out_dir = f"aruco-stl-{marker_id}"
     os.makedirs(out_dir, exist_ok=True)
 
     if args.flat:
