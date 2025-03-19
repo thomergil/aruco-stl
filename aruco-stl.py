@@ -78,11 +78,12 @@ def write_stl(filename, triangles, solid_name="solid"):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate interleaved ArUco marker STL files (white and black parts)."
+        description="Generate interleaved ArUco marker STL files (flat or stacked mode)."
     )
     parser.add_argument("marker_id", type=int, help="ArUco marker id")
     parser.add_argument("--size", type=float, default=DEFAULT_SIZE, help="Overall marker size in mm (default: 100)")
-    parser.add_argument("--thickness", type=float, default=DEFAULT_THICKNESS, help="Extrusion thickness in mm (default: 4)")
+    parser.add_argument("--thickness", type=float, default=DEFAULT_THICKNESS, help="Layer thickness in mm (default: 2)")
+    parser.add_argument("--flat", action="store_true", help="Generate flat mode (both parts at same Z level). Default is stacked mode.")
     args = parser.parse_args()
 
     marker_id = args.marker_id
@@ -125,33 +126,50 @@ def main():
     total_grid = grid_dim + 2           # include border cells
 
     marker_img = generate_marker_image(chosen_dict, marker_id, total_grid)
-    
-    # Calculate the size of each cell in mm.
     cell_size = args.size / total_grid
-    
-    white_tris = []
-    black_tris = []
-    
-    for row in range(total_grid):
-        for col in range(total_grid):
-            # Scale cell positions to mm coordinates.
-            x = col * cell_size
-            y = (total_grid - 1 - row) * cell_size
-            if marker_img[row, col] > 128:
-                white_tris.extend(cuboid_triangles(x, y, args.thickness, size=cell_size))
-            else:
-                black_tris.extend(cuboid_triangles(x, y, args.thickness, size=cell_size))
-    
+
     out_dir = f"aruco-{marker_id}"
     os.makedirs(out_dir, exist_ok=True)
-    
-    white_filename = os.path.join(out_dir, "black.stl") # inverted!
-    black_filename = os.path.join(out_dir, "white.stl") # inverted!
-    
-    write_stl(white_filename, white_tris, solid_name="white")
-    write_stl(black_filename, black_tris, solid_name="black")
-    
-    print(f"Generated STL files:\n  {white_filename}\n  {black_filename}")
+
+    if args.flat:
+        # Flat mode: both parts at same Z level (as before)
+        white_tris = []
+        black_tris = []
+        for row in range(total_grid):
+            for col in range(total_grid):
+                x = col * cell_size
+                y = (total_grid - 1 - row) * cell_size
+                if marker_img[row, col] > 128:
+                    white_tris.extend(cuboid_triangles(x, y, args.thickness, size=cell_size))
+                else:
+                    black_tris.extend(cuboid_triangles(x, y, args.thickness, size=cell_size))
+        # Keep inversion swap as before.
+        white_filename = os.path.join(out_dir, "black.stl")
+        black_filename = os.path.join(out_dir, "white.stl")
+        write_stl(white_filename, white_tris, solid_name="white")
+        write_stl(black_filename, black_tris, solid_name="black")
+        print(f"Generated flat mode STL files:\n  {white_filename}\n  {black_filename}")
+    else:
+        # Stacked mode: create a full base and a top layer (pattern) offset in Z.
+        # Base: full board (white background)
+        base_tris = cuboid_triangles(0, 0, args.thickness, size=args.size)
+        # Top: only marker pattern cells (black) offset in Z by base thickness.
+        top_tris = []
+        for row in range(total_grid):
+            for col in range(total_grid):
+                # Only process marker pattern cells (after inversion, these are dark)
+                if marker_img[row, col] <= 128:
+                    x = col * cell_size
+                    y = (total_grid - 1 - row) * cell_size
+                    cell_tris = cuboid_triangles(x, y, args.thickness, size=cell_size)
+                    # Offset the top layer in Z by the base thickness.
+                    cell_tris = [tuple(np.array(vertex) + np.array([0, 0, args.thickness]) for vertex in tri) for tri in cell_tris]
+                    top_tris.extend(cell_tris)
+        base_filename = os.path.join(out_dir, "base.stl")
+        top_filename = os.path.join(out_dir, "top.stl")
+        write_stl(base_filename, base_tris, solid_name="base")
+        write_stl(top_filename, top_tris, solid_name="top")
+        print(f"Generated stacked mode STL files:\n  {base_filename}\n  {top_filename}")
 
 if __name__ == "__main__":
     main()
