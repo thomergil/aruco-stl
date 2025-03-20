@@ -126,13 +126,25 @@ def main():
     total_grid = grid_dim + 2           # include border cells
 
     marker_img = generate_marker_image(chosen_dict, marker_id, total_grid)
+    
+    # Add an extra border (of one cell) around the whole marker.
+    # Since the marker output is inverted, use the opposite color for the border.
+    # Previously we used white (255), so now we use black (0).
+    border_cells = 1
+    new_total_grid = total_grid + 2 * border_cells
+    new_marker_img = np.zeros((new_total_grid, new_total_grid), dtype=np.uint8)
+    new_marker_img[border_cells:border_cells+total_grid, border_cells:border_cells+total_grid] = marker_img
+    marker_img = new_marker_img
+    total_grid = new_total_grid
+
+    # Calculate the size of each cell in mm.
     cell_size = args.size / total_grid
 
-    out_dir = f"aruco-stl-{marker_id}"
+    out_dir = f"aruco-{marker_id}"
     os.makedirs(out_dir, exist_ok=True)
 
     if args.flat:
-        # Flat mode: both parts at same Z level (as before)
+        # Flat mode: both parts at same Z level.
         white_tris = []
         black_tris = []
         for row in range(total_grid):
@@ -150,14 +162,13 @@ def main():
         write_stl(black_filename, black_tris, solid_name="black")
         print(f"Generated flat mode STL files:\n  {white_filename}\n  {black_filename}")
     else:
-        # Stacked mode: create a full base and a top layer (pattern) offset in Z.
+        # Stacked mode: full base and top layer offset in Z.
         # Base: full board (white background)
         base_tris = cuboid_triangles(0, 0, args.thickness, size=args.size)
         # Top: only marker pattern cells (black) offset in Z by base thickness.
         top_tris = []
         for row in range(total_grid):
             for col in range(total_grid):
-                # Only process marker pattern cells (after inversion, these are dark)
                 if marker_img[row, col] <= 128:
                     x = col * cell_size
                     y = (total_grid - 1 - row) * cell_size
