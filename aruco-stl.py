@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import os
 
-DEFAULT_SIZE = 100  # mm
+DEFAULT_SIZE = 100  # mm; size of the internal ArUco marker (without extra border)
 DEFAULT_THICKNESS = 2  # mm
 
 def generate_marker_image(dictionary, marker_id, total_grid):
@@ -81,7 +81,8 @@ def main():
         description="Generate interleaved ArUco marker STL files (flat or stacked mode)."
     )
     parser.add_argument("marker_id", type=int, help="ArUco marker id")
-    parser.add_argument("--size", type=float, default=DEFAULT_SIZE, help="Overall marker size in mm (default: 100)")
+    # DEFAULT_SIZE is the size for the internal ArUco marker (without extra border)
+    parser.add_argument("--size", type=float, default=DEFAULT_SIZE, help="Size of the internal ArUco marker in mm (default: 100)")
     parser.add_argument("--thickness", type=float, default=DEFAULT_THICKNESS, help="Layer thickness in mm (default: 2)")
     parser.add_argument("--flat", action="store_true", help="Generate flat mode (both parts at same Z level). Default is stacked mode.")
     args = parser.parse_args()
@@ -123,24 +124,28 @@ def main():
 
     print(f"Using ArUco dictionary: {chosen_dict_name}")
     grid_dim = chosen_dict.markerSize  # inner grid size
-    total_grid = grid_dim + 2           # include border cells
+    internal_total_grid = grid_dim + 2   # original marker grid (includes inherent white border)
 
-    marker_img = generate_marker_image(chosen_dict, marker_id, total_grid)
+    # Generate the internal marker image using the given internal grid size.
+    marker_img = generate_marker_image(chosen_dict, marker_id, internal_total_grid)
     
-    # Add an extra border (of one cell) around the whole marker.
-    # Since the marker output is inverted, use the opposite color for the border.
-    # Previously we used white (255), so now we use black (0).
+    # Compute the cell size based on the internal marker size (args.size is the internal marker size).
+    cell_size = args.size / internal_total_grid
+
+    # Now add an extra border around the marker.
+    # Since the marker output is inverted (marker pattern is black, background white),
+    # we add an extra border of the opposite color: here, we use black (0).
     border_cells = 1
-    new_total_grid = total_grid + 2 * border_cells
+    new_total_grid = internal_total_grid + 2 * border_cells
     new_marker_img = np.zeros((new_total_grid, new_total_grid), dtype=np.uint8)
-    new_marker_img[border_cells:border_cells+total_grid, border_cells:border_cells+total_grid] = marker_img
+    new_marker_img[border_cells:border_cells+internal_total_grid, border_cells:border_cells+internal_total_grid] = marker_img
     marker_img = new_marker_img
     total_grid = new_total_grid
 
-    # Calculate the size of each cell in mm.
-    cell_size = args.size / total_grid
+    # The overall printed size will exceed args.size by the border.
+    overall_size = args.size + 2 * border_cells * cell_size
 
-    out_dir = f"aruco-{marker_id}"
+    out_dir = f"aruco-stl-{marker_id}"
     os.makedirs(out_dir, exist_ok=True)
 
     if args.flat:
@@ -163,9 +168,9 @@ def main():
         print(f"Generated flat mode STL files:\n  {white_filename}\n  {black_filename}")
     else:
         # Stacked mode: full base and top layer offset in Z.
-        # Base: full board (white background)
-        base_tris = cuboid_triangles(0, 0, args.thickness, size=args.size)
-        # Top: only marker pattern cells (black) offset in Z by base thickness.
+        # Base: full board with overall size (including extra border)
+        base_tris = cuboid_triangles(0, 0, args.thickness, size=overall_size)
+        # Top: only marker pattern cells (black) offset in Z by the base thickness.
         top_tris = []
         for row in range(total_grid):
             for col in range(total_grid):
