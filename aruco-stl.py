@@ -33,7 +33,7 @@ def cuboid_triangles(x, y, thickness, size=1):
     br_t = np.array([x+size, y, thickness])
     tr_t = np.array([x+size, y+size, thickness])
     tl_t = np.array([x, y+size, thickness])
-    
+
     tris = []
     # Bottom face
     tris.append((bl, br, tr))
@@ -53,7 +53,7 @@ def cuboid_triangles(x, y, thickness, size=1):
     # Left face
     tris.append((tl, bl, bl_t))
     tris.append((tl, bl_t, tl_t))
-    
+
     return tris
 
 def write_stl(filename, triangles, solid_name="solid"):
