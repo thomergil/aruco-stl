@@ -31,11 +31,11 @@ pip install --upgrade pip
 ```bash
 source env/bin/activate
 
-# Generate marker with ID 101 into directory "aruco-101/"
+# Generate marker with ID 101 into directory "aruco-stl-101/"
 # (Stacked mode: for printing WITHOUT MMU; outputs base.stl and top.stl)
 python3 aruco-stl.py 101
 
-# Generate marker with ID 102 into directory "aruco-102/"
+# Generate marker with ID 102 into directory "aruco-stl-102/"
 # (Flat mode: for printing WITH MMU; outputs black.stl and white.stl)
 python3 aruco-stl.py --flat 102
 
